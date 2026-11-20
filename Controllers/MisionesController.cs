@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using DSW_3P_PR01.Models;
 using DSW_3P_PR01.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DSW_3P_PR01.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class MisionesController : ControllerBase
 {
     private readonly IMisionService _service;
@@ -18,9 +20,10 @@ public class MisionesController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<Mision>> ObtenerTodas()
     {
-        var misiones = _service.ObtenerTodas();
+        var misiones = _service.ObtenerTodos();
         return Ok(misiones);
     }
+    
 
     [HttpGet("{id}")]
     public ActionResult<Mision> ObtenerPorId(int id)
