@@ -13,9 +13,9 @@ public class MisionService : IMisionService
         _repository = repository;
     }
 
-    public IEnumerable<Mision> ObtenerTodas()
+    public List<Mision> ObtenerTodos()
     {
-        return _repository.ObtenerTodas();
+        return _repository.ObtenerTodos();
     }
 
     public Mision? ObtenerPorId(int id)
@@ -23,14 +23,14 @@ public class MisionService : IMisionService
         return _repository.ObtenerPorId(id);
     }
 
-    public Mision Crear(Mision mision)
+    public Mision Crear(Mision nuevaMision)
     {
-        ValidarMision(mision);
+        ValidarMision(nuevaMision);
 
         // Regla de negocio: Todas las misiones nuevas deberán iniciar como no completadas.
-        mision.Completada = false;
+        nuevaMision.Completada = false;
 
-        return _repository.Crear(mision);
+        return _repository.Crear(nuevaMision);
     }
 
     public bool Actualizar(int id, Mision mision)
@@ -45,7 +45,7 @@ public class MisionService : IMisionService
         ValidarMision(mision);
 
         mision.Id = id;
-        return _repository.Actualizar(mision);
+        return _repository.Actualizar(id,mision);
     }
 
     public bool Eliminar(int id)

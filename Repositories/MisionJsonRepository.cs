@@ -1,97 +1,92 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
 using DSW_3P_PR01.Models;
-using DSW_3P_PR01.Repositories;
+using System.Text.Json;
 
 namespace DSW_3P_PR01.Repositories;
 
 public class MisionJsonRepository : IMisionRepository
 {
-    private readonly string _filePath;
-    private readonly JsonSerializerOptions _jsonOptions;
 
-    public MisionJsonRepository(IWebHostEnvironment env)
+    private string _ruta;
+    private JsonSerializerOptions _opciones = new()
     {
-        _filePath = Path.Combine(env.ContentRootPath, "misiones.json");
-        _jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
+        WriteIndented = true
+    };
 
-        if (!File.Exists(_filePath))
+    public MisionJsonRepository(IWebHostEnvironment environment)
+    {
+        _ruta = Path.Combine(environment.ContentRootPath, "Data", "misiones.json");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(_ruta)!);
+
+        if (!File.Exists(_ruta))
         {
-            GuardarDatos(new List<Mision>());
+            File.WriteAllText(_ruta,"[]");
         }
     }
 
-    private List<Mision> LeerDatos()
+    private List<Mision> Leer()
     {
-        if (!File.Exists(_filePath))
-        {
-            return new List<Mision>();
-        }
-
-        var json = File.ReadAllText(_filePath);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return new List<Mision>();
-        }
+        string json = File.ReadAllText(_ruta);
 
         return JsonSerializer.Deserialize<List<Mision>>(json) ?? new List<Mision>();
     }
 
-    private void GuardarDatos(List<Mision> misiones)
+    private void Guardar(List<Mision> datos)
     {
-        var json = JsonSerializer.Serialize(misiones, _jsonOptions);
-        File.WriteAllText(_filePath, json);
+        string json = JsonSerializer.Serialize(datos, _opciones);
+        File.WriteAllText(_ruta,json);
     }
-
-    public IEnumerable<Mision> ObtenerTodas()
+    public List<Mision> ObtenerTodos()
     {
-        return LeerDatos();
+        return Leer();
     }
 
     public Mision? ObtenerPorId(int id)
     {
-        var misiones = LeerDatos();
-        return misiones.FirstOrDefault(m => m.Id == id);
+        return Leer().FirstOrDefault(m => m.Id == id);
     }
 
-    public Mision Crear(Mision mision)
+    public Mision Crear(Mision nueva)
     {
-        var misiones = LeerDatos();
-        mision.Id = misiones.Any() ? misiones.Max(m => m.Id) + 1 : 1;
-        misiones.Add(mision);
-        GuardarDatos(misiones);
-        return mision;
+        var datos = Leer();
+
+        nueva.Id = datos.Count == 0 ? 1 : datos.Max(m => m.Id) + 1;
+        datos.Add(nueva);
+        Guardar(datos);
+
+        return nueva;
     }
 
-    public bool Actualizar(Mision mision)
+    public bool Actualizar(int id, Mision actualizada)
     {
-        var misiones = LeerDatos();
-        var index = misiones.FindIndex(m => m.Id == mision.Id);
-        if (index == -1)
-        {
+        var datos = Leer();
+
+        var existente = datos.FirstOrDefault(m => m.Id == id);
+
+        if(existente == null)
             return false;
-        }
 
-        misiones[index] = mision;
-        GuardarDatos(misiones);
+        existente.Nombre= actualizada.Nombre;
+        existente.Dificultad = actualizada.Dificultad;
+        existente.RecompensaXP = actualizada.RecompensaXP;
+        existente.Completada = actualizada.Completada;
+
+        Guardar(datos);
+
         return true;
     }
 
     public bool Eliminar(int id)
     {
-        var misiones = LeerDatos();
-        var mision = misiones.FirstOrDefault(m => m.Id == id);
-        if (mision == null)
-        {
-            return false;
-        }
+        var datos = Leer();
 
-        misiones.Remove(mision);
-        GuardarDatos(misiones);
+        var existente = datos.FirstOrDefault(m => m.Id == id);
+
+        if(existente == null)
+            return false;
+
+        datos.Remove(existente);
+        Guardar(datos);
         return true;
     }
 }
